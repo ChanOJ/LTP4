@@ -144,7 +144,8 @@ python3 scripts/preview.py 3227
 
 - **Website**: push a change under `site/` or `hosting/` to `main` -> workflow *Website: deploy*
   runs the checks, uploads the changed files, deletes the removed ones, purges the CDN and
-  runs the smoke test. A manual run allows a dry run.
+  runs the smoke test. A manual run allows a dry run. While the storage zone does not exist
+  (before the first infra apply), it deploys nothing and only reports a notice.
 - **Infra**: pull requests touching `infra/` show the plan; apply is a manual run of
   *Infra: bunny.net* (action `apply`, from `main`), which commits the encrypted state, deploys
   `site/` and runs the smoke test.
