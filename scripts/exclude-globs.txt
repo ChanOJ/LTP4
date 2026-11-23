@@ -1,0 +1,23 @@
+# Files that must NOT be published (relative to site/; no '/' = basename anywhere; '*' crosses '/').
+# Checked by scripts/check_excludes.py and scripts/verify_build.py before every deployment.
+# Never published: credentials, visitor data, server-side code, OS junk. The ASP/SSI pages are
+# rendered to .html by scripts/statify.py; their sources are never copied.
+
+.DS_Store
+Thumbs.db
+.picasa.ini
+*.log
+*.bak
+*.map
+# server-side code of the original site
+*.asp
+*.inc
+*.shtml
+*.c
+# registration, car-trip and forum data of the original site (logins, addresses, e-mails)
+ltpdata/**
+party/**
+*logins*
+inscriptions*
+# the truncated Wayback copy of the LTP3 report (an unreadable zip)
+jff-ltp3report.zip
