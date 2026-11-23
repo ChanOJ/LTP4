@@ -23,6 +23,7 @@ import argparse
 import html
 import re
 import shutil
+import subprocess
 import sys
 from pathlib import Path
 from urllib.parse import unquote
@@ -430,6 +431,8 @@ def main(argv=None):
         sum(1 for o in SOURCES if is_page(o)), sum(1 for p in out.rglob("*") if p.is_file()),
         ", ".join(ctx["forms"]) or "none"))
     print("targets never archived (links/images dropped): %d (build-meta/not-archived.txt)" % len(ctx["missing"]))
+    # Crawlers and frames: sitemap.xml, robots.txt and the frame-restore script tag (scripts/seo.py).
+    subprocess.run([sys.executable, "-I", str(REPO / "scripts" / "seo.py"), "--site", str(out)], check=True)
     return 0
 
 
