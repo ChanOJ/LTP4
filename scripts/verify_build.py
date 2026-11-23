@@ -158,7 +158,7 @@ def main(argv=None):
 
     bfiles = all_files(build)
     bset = set(bfiles)
-    missing = [f for f in ("index.html", "forum.html", "howtoreserve.html", "paid.html", "intro.html",
+    missing = [f for f in ("index.html", "news.html", "forum.html", "howtoreserve.html", "paid.html",
                            "img/ltpintro.swf", "ruffle/ruffle.js") if f not in bset]
     if missing or len(bfiles) < 40:
         fail("build looks incomplete (missing key pages / too few files)", missing or [str(len(bfiles))])

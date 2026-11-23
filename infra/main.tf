@@ -81,7 +81,8 @@ locals {
   # Inline scripts/styles are everywhere in 2000 HTML, hence 'unsafe-inline'.
   # The Flash intro (intro.html) runs in Ruffle, served from the site itself:
   # WebAssembly needs 'wasm-unsafe-eval', and Ruffle fetches its .wasm and the
-  # .swf (connect-src 'self') and starts a blob: worker. form-action 'none': the old forms (forum, car
+  # .swf (connect-src 'self') and starts a blob: worker; the mod player of the
+  # intro (chiptune3) fetches the .mod and runs an AudioWorklet from the site. form-action 'none': the old forms (forum, car
   # trips, mailing list) are gone and must never submit anywhere.
   # img-src keeps http:/https: only while legacy remote images remain in the
   # pages (most hosts are dead; drop it if the build strips them).
@@ -104,7 +105,7 @@ locals {
   archive_extensions = ["zip"]
 
   html_extensions   = ["htm", "html", "shtml"]
-  static_extensions = ["jpg", "jpeg", "gif", "png", "ico", "zip", "swf", "wasm"]
+  static_extensions = ["jpg", "jpeg", "gif", "png", "ico", "zip", "swf", "wasm", "mod"]
 }
 
 # 1. Anything but GET/HEAD/OPTIONS is refused at the edge, before the origin.

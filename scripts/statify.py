@@ -32,6 +32,7 @@ REPO = Path(__file__).resolve().parent.parent
 PRIVATE_DEFAULT = REPO / "private"
 MASK = "????"
 RUFFLE_VERSION = "0.7.1"
+CHIPTUNE_VERSION = "0.8.11-r25871"
 FONT = 'face="Verdana, Arial, Helvetica, sans-serif"'
 
 # Published path (original name) -> (source under private/, note). Order = build order.
@@ -80,11 +81,16 @@ SOURCES = {
     "img/carte3.jpg": (W + "20001002031908/img/carte3.jpg", "Wayback 2000-10-02 (same bytes as the local archive)"),
     "img/pano.jpg": ("nas/img/panoram.jpg", "never captured: local archive ltp/http/img/panoram.jpg (photo of the party place)"),
     "img/ltpintro.swf": ("nas/img/ltpintro.swf", "local archive ltp/http/img/ltpintro.swf"),
+    # Tune of the intro ("Dis2them" = DisIsSid-theme 2 by Pink / Abyss, 8.3 name): never archived
+    # with the site, taken from Modland (via Demozoo, music/254005).
+    "music/dis2them.mod": ("music/disissid-2-theme.mod",
+                           "never archived: ftp.modland.com Protracker/Pink/disissid-2-theme.mod"),
     # Downloads.
     "ltpform.zip": ("nas/ltpform.zip", "local archive ltp/http/ltpform.zip (blank entrance order form)"),
 }
 # Original page name -> published name.
-RENAMES = {"intro.htm": "intro.html"}
+# The Flash intro is the entry page (site root); the news page index.asp becomes news.html.
+RENAMES = {"intro.htm": "index.html", "index.asp": "news.html"}
 # Links whose target was never captured and is not in the local archive: left as plain text.
 # (Also every gallery photo of ltp2pic/ and ltp3pic/ and the sponsor logos, found automatically.)
 NOT_ARCHIVED_NOTE = "not archived"
@@ -127,6 +133,39 @@ def is_page(name):
 
 
 # --------------------------------------------------------------------- transforms
+MENU_END = re.compile(r"</td>\s*<td width=4><img src=images/spacer\.gif width=1 height=1></td>")
+
+
+def restyle_menu(t):
+    """The 2000-08-29 pages lost the fonts and colours of their left menu (hand-edited menu,
+    plain <td>/<a>, so the browser default serif font and the orange BODY link colour). The
+    2000-08-17 capture of the home page still has them: same markup applied, items unchanged."""
+    start = t.find("<td>&#187;")
+    if start < 0:
+        return t
+    m = MENU_END.search(t, start)
+    if not m:
+        return t
+    block = t[start:m.start()]
+    block = re.sub(r"<td>&#187; ([^<]*)</td>",
+                   r'<td><FONT %s size="2"><B><FONT color="#FFFFFF">&#187; \1</FONT></B></FONT></td>' % FONT, block)
+
+    def color_links(run):
+        return re.sub(r"(?is)(<a\b[^>]*>)(.*?)</a>",
+                      lambda a: a.group(0) if "<font" in a.group(2).lower()
+                      else '%s<FONT color="#996600">%s</FONT></a>' % (a.group(1), a.group(2)), run)
+
+    parts = re.split(r"(?i)(</table>)", block)
+    out = []
+    for i, part in enumerate(parts):
+        if i and parts[i - 1].lower() == "</table>":
+            nxt = re.search(r"(?i)<table\b", part)
+            run, rest = (part[:nxt.start()], part[nxt.start():]) if nxt else (part, "")
+            part = '<FONT %s size="2">%s<BR><BR></FONT>\n%s' % (FONT, color_links(run.rstrip()), rest)
+        out.append(part)
+    return t[:start] + "".join(out) + t[m.start():]
+
+
 def strip_mailing_form(t):
     """The mailing-list form of every page only held hidden fields (no visible input): drop it."""
     return re.sub(r'(?is)<form action="m\.asp".*?</form>\s*', "", t)
@@ -278,6 +317,29 @@ def intro_page(t):
               '});</script>')
     t, n = re.subn(r"(?is)<object\b.*?</object>", lambda m: player, t)
     assert n == 1, "intro: flash object not found"
+    # Mod player: the popup (popup.shtml, Modplug plugin) is gone; chiptune3 (libopenmpt) plays
+    # the tune in the page, from the first click or key press (browsers block sound before).
+    t, n = re.subn(r"Tune : Dis2them by Pink / Absys",
+                   '<a href="music/dis2them.mod" id="tune">Tune : Dis2them by Pink / Absys</a><br>'
+                   '<font size="1">[click the page or press a key to hear the tune]</font>', t)
+    assert n == 1, "intro: tune line not found"
+    music = ('<script type="module">\n'
+             'import { ChiptuneJsPlayer } from "./chiptune/chiptune3.js";\n'
+             'let player = null, paused = false;\n'
+             'function start() {\n'
+             '  if (player) return;\n'
+             '  player = new ChiptuneJsPlayer({ repeatCount: -1 });\n'
+             '  player.onInitialized(() => player.load("music/dis2them.mod"));\n'
+             '}\n'
+             'addEventListener("pointerdown", start, { once: true });\n'
+             'addEventListener("keydown", start, { once: true });\n'
+             'document.getElementById("tune").addEventListener("click", (e) => {\n'
+             '  e.preventDefault();\n'
+             '  if (!player) return start();\n'
+             '  paused = !paused; player.togglePause();\n'
+             '});\n'
+             '</script>\n')
+    t = t.replace("</body>", music + "</body>", 1)
     t = t.replace('href="home.shtml"', 'href="index.asp"')
     ruffle = ('<script>window.RufflePlayer = window.RufflePlayer || {}; window.RufflePlayer.config = '
               '{"publicPath": "ruffle/", "polyfills": false, "preferredRenderer": "canvas", "autoplay": "on", "unmuteOverlay": "hidden", '
@@ -297,8 +359,10 @@ def main(argv=None):
 
     missing_src = [s for s, _ in SOURCES.values() if not (priv / s).is_file()]
     ruffle_dir = priv / "vendor" / ("ruffle-%s" % RUFFLE_VERSION) / "package"
-    if missing_src or not ruffle_dir.is_dir():
-        print("missing sources under %s:" % priv, *(missing_src or [str(ruffle_dir)]), sep="\n  ")
+    chip_dir = priv / "vendor" / ("chiptune3-%s" % CHIPTUNE_VERSION) / "package"
+    missing_src += [str(d) for d in (ruffle_dir, chip_dir) if not d.is_dir()]
+    if missing_src:
+        print("missing sources under %s:" % priv, *missing_src, sep="\n  ")
         return 2
 
     # 1. raw tree with the original names
@@ -325,6 +389,7 @@ def main(argv=None):
         t = read_text(raw / orig)
         if orig == "intro.htm":
             t = intro_page(t)
+        t = restyle_menu(t)
         t = strip_mailing_form(t)
         t = replace_forms(t, ctx, orig)
         t = strip_counters(t)
@@ -347,6 +412,15 @@ def main(argv=None):
             name = f.name + ".txt" if f.name.startswith("LICENSE") else f.name
             shutil.copyfile(f, rdir / name)
             rows.append(("ruffle/" + name, "Ruffle %s (npm @ruffle-rs/ruffle)" % RUFFLE_VERSION))
+
+    # chiptune3 (libopenmpt in WebAssembly, mod player of the intro): runtime files only.
+    cdir = out / "chiptune"
+    cdir.mkdir(parents=True, exist_ok=True)
+    for f in sorted(chip_dir.iterdir()):
+        if f.suffix == ".js" or f.name == "LICENSE":
+            name = "LICENSE.txt" if f.name == "LICENSE" else f.name
+            shutil.copyfile(f, cdir / name)
+            rows.append(("chiptune/" + name, "chiptune3 %s (npm chiptune3)" % CHIPTUNE_VERSION))
 
     meta.mkdir(parents=True, exist_ok=True)
     (meta / "sources.tsv").write_text("".join("%s\t%s\n" % r for r in rows), encoding="utf-8")

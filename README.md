@@ -45,9 +45,9 @@ recovered from the **Wayback Machine** (raw `id_` captures, no toolbar), crawl o
 | `index.asp` (news), `forum.asp`, `carbustrip.asp` | Wayback 2000-08-29 |
 | `information`, `legalinformation`, `financial`, `howtocome`, `howtoreserve`, `paid` `.shtml` | Wayback 2000-08-29 |
 | `compomachines`, `comporules`, `sponsors`, `ltp2pic`, `ltp3pic`, `ltpeqx`, `ltpeqxm`, `64` `.shtml` | Wayback 2000-08-29 |
-| `intro.html` (Flash intro) | Local archive, `ltp/http/img/index.htm` (2000-08-29) |
+| `index.html` (Flash intro, site root) | Local archive, `ltp/http/img/index.htm` (2000-08-29) |
 
-Pages are renamed to `.html` (`index.asp` -> `index.html`, `forum.asp` -> `forum.html`,
+Pages are renamed to `.html` (`index.asp` -> `news.html`, `forum.asp` -> `forum.html`,
 `howtocome.shtml` -> `howtocome.html`...; list in `build-meta/redirects.tsv`).
 
 ## What was changed from the original
@@ -78,14 +78,23 @@ Pages are renamed to `.html` (`index.asp` -> `index.html`, `forum.asp` -> `forum
   horizontal mirror of `images/hdo.gif`.
 - **Java invitation** (`ltpeqx.html`, `ltpeqxm.html`): the applet `Troisd.jar` was never captured;
   a one-line notice replaces it.
-- **Flash intro** (`intro.html`): the original entry page of the site (Flash 4 intro, mod
-  player popup). It plays again with [Ruffle](https://ruffle.rs) 0.7.1, self-hosted in
+- **Flash intro** (`index.html`, the site root): the original entry page of the site (Flash 4
+  intro, mod player popup). It plays again with [Ruffle](https://ruffle.rs) 0.7.1, self-hosted in
   `site/ruffle/` (npm `@ruffle-rs/ruffle`, integrity checked, MIT/Apache-2.0 licences kept): the
   `<object>`/`<embed>` pair becomes a Ruffle player created from script (canvas renderer). The
-  mod player popup (`popup.shtml`, tune "Dis2them" by Pink / Absys) was never archived: its
-  `onload` call is removed. In August 2000 the site root already served the news page, so the
-  intro is published as `intro.html`, linked from no page (as it was by then); "Enter" leads
-  to the news.
+  mod player popup (`popup.shtml`, Modplug plugin) was never archived: its `onload` call is
+  removed and the tune plays in the page with [chiptune3](https://github.com/DrSnuggles/chiptune)
+  0.8.11 (libopenmpt in WebAssembly, MIT, self-hosted in `site/chiptune/`), from the first click
+  or key press (browsers block sound before; a one-line hint says so, and a click on the tune
+  line pauses it). The tune, "Dis2them by Pink / Absys", is most likely *DisIsSid-theme 2* by
+  Pink / Abyss (1994, 4-channel MOD, "Dis2them" being its 8.3 file name); it was never archived
+  with the site and comes from Modland (`Protracker/Pink/disissid-2-theme.mod`, listed by
+  Demozoo), published as `music/dis2them.mod`. In August 2000 the root already served the news
+  (crawl of 2000-08-17); the intro is made the root again, "Enter" leads to `news.html`.
+- **Left menu**: in the 2000-08-29 pages the menu had lost its fonts and colours (plain
+  `<td>`/`<a>`: default serif font, orange body link colour, no space between sections). The
+  markup of the 2000-08-17 capture is applied again (Verdana size 2, `#996600` links, white bold
+  section titles, blank line after each section); the items of 2000-08-29 are kept.
 - `face="Verdana"` gets sans-serif fallbacks (`DejaVu Sans, Geneva, sans-serif`).
 - Links to `http://ltp.ojuice.net/...` become relative; other external links are left as they
   were (most hosts are dead).
@@ -98,7 +107,9 @@ sources live in `private/` (git-ignored, keep that folder: it is the only assemb
 - `private/wayback/raw/<timestamp>/<path>`: Wayback captures, and the CDX listings
   `private/wayback/cdx-*.txt` (queries over 1999-2001 with `collapse=digest`);
 - `private/nas/`: files copied from the local archive (`Sites web/ltp/http/`);
-- `private/gen/hgo.gif`; `private/vendor/ruffle-0.7.1/` (npm tarball, unpacked).
+- `private/music/disissid-2-theme.mod` (Modland);
+- `private/gen/hgo.gif`; `private/vendor/ruffle-0.7.1/`, `private/vendor/chiptune3-0.8.11-r25871/`
+  (npm tarballs, unpacked).
 
 ```bash
 python3 scripts/statify.py && python3 scripts/verify_build.py
@@ -115,13 +126,13 @@ python3 scripts/preview.py 3227
 - Edge rule 1: any method other than GET, HEAD, OPTIONS is blocked at the edge, before the
   origin (bunny.net answers 403; edge rules cannot return 405). `block_post_requests` is also on.
 - Edge rule 2: `Content-Security-Policy` (same-origin, inline script/style allowed for the 2000
-  HTML, `wasm-unsafe-eval`, `connect-src 'self'` and `worker-src 'self' blob:` for Ruffle,
+  HTML, `wasm-unsafe-eval`, `connect-src 'self'` and `worker-src 'self' blob:` for Ruffle and the mod player,
   `object-src 'none'`, `form-action 'none'`), `X-Content-Type-Options: nosniff`,
   `X-Frame-Options: SAMEORIGIN`, `Referrer-Policy`, HSTS, `Permissions-Policy`.
 - Edge rules 3-4: `Content-Type` with `charset=iso-8859-1` for `.htm/.html/.shtml` and
   `.txt/.inc/.ini` (the pages are ISO-8859-1).
 - Archives (`zip`): `application/octet-stream` + `Content-Disposition: attachment`.
-- Browser cache 7 days for images, archives, `.swf` and `.wasm`, 1 hour for pages; CDN cache 30
+- Browser cache 7 days for images, archives, `.swf`, `.wasm` and `.mod`, 1 hour for pages; CDN cache 30
   days, purged on each deployment. `.wasm` served as `application/wasm`.
 - COOP/CORP `same-origin`. Search engines are allowed (no `X-Robots-Tag`, no `robots.txt`).
 - CI (deploy workflow), before upload: excluded-paths check, `scripts/verify_build.py --build site`
