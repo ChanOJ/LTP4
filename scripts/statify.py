@@ -28,6 +28,33 @@ from pathlib import Path
 from urllib.parse import unquote
 
 ENC = "iso-8859-1"
+
+# ---- removal-request footer: added to every page that lists or describes people
+REMOVAL_MARK = 'id="removal-note"'
+REMOVAL_NOTE = (
+    '<div id="removal-note" style="clear:both;margin:28px auto 8px;padding:6px 8px 0;width:60%;'
+    'border-top:1px solid #808080;text-align:center;font:10px/14px Verdana,Arial,Helvetica,sans-serif;'
+    'color:#808080;background:transparent">To be removed from this page, '
+    '<a href="mailto:chandra_oj@pm.me" style="color:#808080;text-decoration:underline">contact me</a>.</div>'
+)
+_BODY_END = re.compile(r"(?is)</body\s*>(?!.*</body\s*>)")
+
+
+def add_removal_note(text):
+    if REMOVAL_MARK in text:
+        return text
+    m = _BODY_END.search(text)
+    if m:
+        return text[: m.start()] + REMOVAL_NOTE + "\n" + text[m.start():]
+    return text + "\n" + REMOVAL_NOTE + "\n"
+
+# Pages that list or describe people (entrance-fee list, party photos, car trips, forum posts).
+PEOPLE_PAGES = {"paid.html", "ltp2pic.html", "ltp3pic.html", "carbustrip.html", "forum.html"}
+
+
+def is_people_page(rel):
+    return rel in PEOPLE_PAGES
+
 REPO = Path(__file__).resolve().parent.parent
 PRIVATE_DEFAULT = REPO / "private"
 MASK = "????"
@@ -400,7 +427,7 @@ def main(argv=None):
         t = self_links(t)
         t = drop_missing(t, orig, published, ctx)
         t = rename_links(t, orig, published)
-        write_text(out / new, t)
+        write_text(out / new, add_removal_note(t) if is_people_page(new) else t)
         if new != orig:
             redirects.append(("/" + orig, "/" + new))
 

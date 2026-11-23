@@ -48,8 +48,12 @@ VENDOR = "ruffle/"
 IPV4 = re.compile(r"(?<![\d.])(?:(?:25[0-5]|2[0-4]\d|1?\d?\d)\.){3}(?:25[0-5]|2[0-4]\d|1?\d?\d)(?![\d.])")
 
 
+# The removal-request footer (statify.py) carries the only mailto: of the site: leave it out of every scan.
+REMOVAL_NOTE_RE = re.compile(r'(?s)<div id="removal-note".*?</div>')
+
+
 def rd(p):
-    return Path(p).read_bytes().decode(ENC)
+    return REMOVAL_NOTE_RE.sub("", Path(p).read_bytes().decode(ENC))
 
 
 def all_files(root):
