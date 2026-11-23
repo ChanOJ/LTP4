@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "ltp4-site",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["scripts/preview.py", "3227"],
+      "port": 3227
+    }
+  ]
+}
