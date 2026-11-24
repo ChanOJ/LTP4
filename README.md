@@ -104,12 +104,13 @@ Pages are renamed to `.html` (`index.asp` -> `news.html`, `forum.asp` -> `forum.
   [Orange Juice v3](https://orangejuicev3.sauthier.family), `www.ojuice.net/nectarine` to
   [Nectarine](https://nectarine.sauthier.family), and the 23 flag images of `paid.html` are served locally
   (`images/flags/`, copied from Orange Juice v3, which refuses cross-origin images). The two download links `www.ojuice.net/search/index.asp?s=no_ltp.zip` and
-  `...ltp4invtrolnx.tgz` have no equivalent there and stay as they were (dead). Other external
+  `...ltp4invtrolnx.tgz` have no equivalent there and stay as they were (dead): the files were not found in the raw store
+  nor in the NAS archive (Orange Juice v3 only lists them in its file index). Other external
   links are left as they were (most hosts are dead).
 - **Anchors**: `<a name="#old2">` (hash inside the name, an original bug) and `href="#pc%20"` are
   repaired so the in-page links work.
-- **Intro**: the stale "download the Modplug and Flash plugins" sentence (and its dead FTP link) is
-  removed; the tune line shows its state (loading / playing / paused).
+- **Intro**: the tune line shows its state (loading / playing / paused). The old "download the
+  Modplug and Flash plugins" sentence and its (dead) FTP link are kept as nostalgic history.
 
 ## Regenerating `site/`
 

@@ -370,9 +370,6 @@ def intro_page(t):
     assert n == 1, "intro: flash object not found"
     # Mod player: the popup (popup.shtml, Modplug plugin) is gone; chiptune3 (libopenmpt) plays
     # the tune in the page, from the first click or key press (browsers block sound before).
-    # The "download the Modplug / Flash plugins" sentence is stale (Ruffle and libopenmpt play both).
-    t, n = re.subn(r'(?s)\s*This website support <a href="ftp://[^"]*npmod\.zip">Modplug</a>\s*sound and Flash\. Please download those small plugins\.<br>', "", t)
-    assert n == 1, "intro: plugin sentence not found"
     t, n = re.subn(r"Tune : Dis2them by Pink / Absys",
                    '<a href="music/dis2them.mod" id="tune">Tune : Dis2them by Pink / Absys</a><br>'
                    '<font size="1" id="tunehint">[click the page or press a key to hear the tune]</font>', t)
