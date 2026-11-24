@@ -147,7 +147,7 @@ python3 scripts/preview.py 3227
 - Archives (`zip`): `application/octet-stream` + `Content-Disposition: attachment`.
 - Browser cache 7 days for images, archives, `.swf`, `.wasm` and `.mod`, 1 hour for pages; CDN cache 30
   days, purged on each deployment. `.wasm` served as `application/wasm`.
-- COOP/CORP `same-origin`. Search engines are allowed (no `X-Robots-Tag`, no `robots.txt`).
+- COOP/CORP `same-origin`. Search engines are allowed (no `X-Robots-Tag`; `robots.txt` allows everything and points to `sitemap.xml`).
 - CI (deploy workflow), before upload: excluded-paths check, `scripts/verify_build.py --build site`
   and a ClamAV scan of `site/`.
 - Cookies are stripped before the origin; TLS "Compatible"; forced HTTPS.
