@@ -33,7 +33,7 @@ ENC = "iso-8859-1"
 # ---- removal-request footer: added to every page that lists or describes people
 REMOVAL_MARK = 'id="removal-note"'
 REMOVAL_NOTE = (
-    '<div id="removal-note" style="clear:both;margin:28px auto 8px;padding:6px 8px 0;width:60%;'
+    '<div id="removal-note" style="clear:both;margin:28px auto 8px;padding:6px 8px 0;width:760px;max-width:96%;box-sizing:border-box;'
     'border-top:1px solid #808080;text-align:center;font:10px/14px Verdana,Arial,Helvetica,sans-serif;'
     'color:#808080;background:transparent">To be removed from this page, '
     '<a href="mailto:chandra_oj@pm.me" style="color:#808080;text-decoration:underline">contact me</a>.</div>'
@@ -49,12 +49,13 @@ def add_removal_note(text):
         return text[: m.start()] + REMOVAL_NOTE + "\n" + text[m.start():]
     return text + "\n" + REMOVAL_NOTE + "\n"
 
-# Pages that list or describe people (entrance-fee list, party photos, car trips, forum posts).
-PEOPLE_PAGES = {"paid.html", "ltp2pic.html", "ltp3pic.html", "carbustrip.html", "forum.html"}
+# Pages that show a family name: every page with the left menu (it names the sponsoring contact,
+# "Guillaume Nichols") plus the people lists. Not the Flash intro nor the two Java invitations.
+NO_FOOTER_PAGES = {"index.html", "ltpeqx.html", "ltpeqxm.html"}
 
 
 def is_people_page(rel):
-    return rel in PEOPLE_PAGES
+    return rel.endswith(".html") and rel not in NO_FOOTER_PAGES
 
 REPO = Path(__file__).resolve().parent.parent
 PRIVATE_DEFAULT = REPO / "private"
@@ -91,6 +92,8 @@ SOURCES = {
     "_.gif": (W + "20000829033021/_.gif", "Wayback 2000-08-29"),
     "images/pixel.gif": (W + "20000829033011/images/pixel.gif", "Wayback 2000-08-29"),
     "images/hdo.gif": (W + "20000829033015/images/hdo.gif", "Wayback 2000-08-29"),
+    **{"images/flags/%s.gif" % c: ("gen/flags/%s.gif" % c, "skin flag of Orange Juice v3 (originally ojuice.net/skins/tonic/pictures/flags/)")
+       for c in ("be", "ca", "ch", "fi", "hu", "nl", "pt", "se", "uk")},
     "images/hgo.gif": ("gen/hgo.gif", "never captured: horizontal mirror of images/hdo.gif"),
     "images/bgo.gif": (W + "20000829033031/images/bgo.gif", "Wayback 2000-08-29"),
     "images/bdo.gif": (W + "20000829033035/images/bdo.gif", "Wayback 2000-08-29"),
@@ -236,6 +239,26 @@ def self_links(t):
     return re.sub(r'(?i)(href\s*=\s*")http://ltp\.ojuice\.net/', r"\1", t)
 
 
+OJV3 = "https://orangejuicev3.sauthier.family"
+NECTARINE = "https://nectarine.sauthier.family"
+
+
+def ojuice_links(t):
+    """Cross links to the dead www.ojuice.net: home -> Orange Juice v3, /nectarine -> Nectarine,
+    skin flags -> local copies (OJv3 refuses cross-origin images). The /search/index.asp?s=... download links have
+    no equivalent there and stay as they were."""
+    t = re.sub(r'(?i)(href\s*=\s*")http://www\.ojuice\.net/nectarine/?(")', r"\1" + NECTARINE + r"/\2", t)
+    t = re.sub(r'(?i)(href\s*=\s*")http://www\.ojuice\.net/?(")', r"\1" + OJV3 + r"/\2", t)
+    t = re.sub(r'(?i)(src\s*=\s*"?)http://ojuice\.net/skins/tonic/pictures/flags/', r"\1images/flags/", t)
+    return t
+
+
+def fix_anchors(t):
+    """Original bug: <a name="#old2"> (hash inside the name) never matched href="#old2"."""
+    t = re.sub(r'(?i)(<a\s+name\s*=\s*")#', r"\1", t)
+    return t.replace('href="#pc%20"', 'href="#pc"')   # 64.html: stray space in the anchor name
+
+
 LINK_ATTR = re.compile(r"""(?i)\b(href|src|background)(\s*=\s*)("([^"]*)"|([^\s">]+))""")
 
 
@@ -347,24 +370,34 @@ def intro_page(t):
     assert n == 1, "intro: flash object not found"
     # Mod player: the popup (popup.shtml, Modplug plugin) is gone; chiptune3 (libopenmpt) plays
     # the tune in the page, from the first click or key press (browsers block sound before).
+    # The "download the Modplug / Flash plugins" sentence is stale (Ruffle and libopenmpt play both).
+    t, n = re.subn(r'(?s)\s*This website support <a href="ftp://[^"]*npmod\.zip">Modplug</a>\s*sound and Flash\. Please download those small plugins\.<br>', "", t)
+    assert n == 1, "intro: plugin sentence not found"
     t, n = re.subn(r"Tune : Dis2them by Pink / Absys",
                    '<a href="music/dis2them.mod" id="tune">Tune : Dis2them by Pink / Absys</a><br>'
-                   '<font size="1">[click the page or press a key to hear the tune]</font>', t)
+                   '<font size="1" id="tunehint">[click the page or press a key to hear the tune]</font>', t)
     assert n == 1, "intro: tune line not found"
     music = ('<script type="module">\n'
              'import { ChiptuneJsPlayer } from "./chiptune/chiptune3.js";\n'
-             'let player = null, paused = false;\n'
-             'function start() {\n'
+             'const tune = document.getElementById("tune"), hint = document.getElementById("tunehint");\n'
+             'let player = null, paused = false, skipClick = false;\n'
+             'function say(m) { hint.textContent = "[" + m + "]"; }\n'
+             'function start(e) {\n'
              '  if (player) return;\n'
+             '  if (e && e.target.closest && e.target.closest("#tune")) skipClick = true;  // this gesture only starts it\n'
+             '  say("loading the tune...");\n'
              '  player = new ChiptuneJsPlayer({ repeatCount: -1 });\n'
-             '  player.onInitialized(() => player.load("music/dis2them.mod"));\n'
+             '  player.onInitialized(() => { player.context.resume(); player.load("music/dis2them.mod"); say("playing: click the tune to pause"); });\n'
+             '  player.onError(() => say("the tune cannot be played in this browser"));\n'
              '}\n'
              'addEventListener("pointerdown", start, { once: true });\n'
              'addEventListener("keydown", start, { once: true });\n'
-             'document.getElementById("tune").addEventListener("click", (e) => {\n'
+             'tune.addEventListener("click", (e) => {\n'
              '  e.preventDefault();\n'
+             '  if (skipClick) { skipClick = false; return; }\n'
              '  if (!player) return start();\n'
              '  paused = !paused; player.togglePause();\n'
+             '  say(paused ? "paused: click the tune to resume" : "playing: click the tune to pause");\n'
              '});\n'
              '</script>\n')
     t = t.replace("</body>", music + "</body>", 1)
@@ -426,6 +459,8 @@ def main(argv=None):
         t = redact(t)
         t = font_fallback(t)
         t = self_links(t)
+        t = ojuice_links(t)
+        t = fix_anchors(t)
         t = drop_missing(t, orig, published, ctx)
         t = rename_links(t, orig, published)
         write_text(out / new, add_removal_note(t) if is_people_page(new) else t)

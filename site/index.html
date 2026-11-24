@@ -19,25 +19,30 @@
   <p><br>
     <b><font color="#FFFFFF" face="Verdana, Arial, Helvetica, sans-serif" size="3"><a href="news.html">Enter 
     </a></font></b><br>
-    This website support <a href="ftp://ftp.vtm.gervis.net/download/npmod.zip">Modplug</a> 
-    sound and Flash. Please download those small plugins.<br>
-    <a href="music/dis2them.mod" id="tune">Tune : Dis2them by Pink / Absys</a><br><font size="1">[click the page or press a key to hear the tune]</font>
+    <a href="music/dis2them.mod" id="tune">Tune : Dis2them by Pink / Absys</a><br><font size="1" id="tunehint">[click the page or press a key to hear the tune]</font>
     </p>
 </div>
 <script type="module">
 import { ChiptuneJsPlayer } from "./chiptune/chiptune3.js";
-let player = null, paused = false;
-function start() {
+const tune = document.getElementById("tune"), hint = document.getElementById("tunehint");
+let player = null, paused = false, skipClick = false;
+function say(m) { hint.textContent = "[" + m + "]"; }
+function start(e) {
   if (player) return;
+  if (e && e.target.closest && e.target.closest("#tune")) skipClick = true;  // this gesture only starts it
+  say("loading the tune...");
   player = new ChiptuneJsPlayer({ repeatCount: -1 });
-  player.onInitialized(() => player.load("music/dis2them.mod"));
+  player.onInitialized(() => { player.context.resume(); player.load("music/dis2them.mod"); say("playing: click the tune to pause"); });
+  player.onError(() => say("the tune cannot be played in this browser"));
 }
 addEventListener("pointerdown", start, { once: true });
 addEventListener("keydown", start, { once: true });
-document.getElementById("tune").addEventListener("click", (e) => {
+tune.addEventListener("click", (e) => {
   e.preventDefault();
+  if (skipClick) { skipClick = false; return; }
   if (!player) return start();
   paused = !paused; player.togglePause();
+  say(paused ? "paused: click the tune to resume" : "playing: click the tune to pause");
 });
 </script>
 </body>
