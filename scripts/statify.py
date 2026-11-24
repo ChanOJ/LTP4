@@ -221,9 +221,18 @@ def strip_icq(t):
     return re.sub(r'(?is)<a href="http://wwp\.mirabilis\.com/[^"]*">\s*<img [^>]*mirabilis[^>]*>\s*</a>\s*', "", t)
 
 
+# E-mail addresses: shown in full, except when the local part is a family name (decided
+# 2026-11-24): then the mailto link is dropped and the domain becomes ????. Local parts of nicks,
+# first names and roles stay whole. Lower case.
+FAMILY_LOCALS = {"nstefani", "etienne.jacques"}
+
+
 def redact(t):
-    t = re.sub(r'(?i)<a\s+href\s*=\s*"?mailto:[^">]*"?\s*>', "<a>", t)
-    t = EMAIL.sub(lambda m: "%s@%s" % (m.group(1), MASK), t)
+    def mailto(m):
+        local = m.group(2).split("@")[0].lower()
+        return "<a>" if local in FAMILY_LOCALS else m.group(0)
+    t = re.sub(r'(?i)(<a\s+href\s*=\s*"?mailto:)([^">]*)("?\s*>)', lambda m: mailto(m), t)
+    t = EMAIL.sub(lambda m: m.group(0) if m.group(1).lower() not in FAMILY_LOCALS else "%s@%s" % (m.group(1), MASK), t)
     for rx, rep in REDACT:
         t = rx.sub(rep, t)
     return t
