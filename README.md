@@ -100,8 +100,17 @@ Pages are renamed to `.html` (`index.asp` -> `news.html`, `forum.asp` -> `forum.
   markup of the 2000-08-17 capture is applied again (Verdana size 2, `#996600` links, white bold
   section titles, blank line after each section); the items of 2000-08-29 are kept.
 - `face="Verdana"` gets sans-serif fallbacks (`DejaVu Sans, Geneva, sans-serif`).
-- Links to `http://ltp.ojuice.net/...` become relative; other external links are left as they
-  were (most hosts are dead).
+- Links to `http://ltp.ojuice.net/...` become relative. Cross links: `www.ojuice.net` now points to
+  [Orange Juice v3](https://orangejuicev3.sauthier.family), `www.ojuice.net/nectarine` to
+  [Nectarine](https://nectarine.sauthier.family), and the 23 flag images of `paid.html` are served locally
+  (`images/flags/`, copied from Orange Juice v3, which refuses cross-origin images). The two download links `www.ojuice.net/search/index.asp?s=no_ltp.zip` and
+  `...ltp4invtrolnx.tgz` have no equivalent there and stay as they were (dead): the files were not found in the raw store
+  nor in the NAS archive (Orange Juice v3 only lists them in its file index). Other external
+  links are left as they were (most hosts are dead).
+- **Anchors**: `<a name="#old2">` (hash inside the name, an original bug) and `href="#pc%20"` are
+  repaired so the in-page links work.
+- **Intro**: the tune line shows its state (loading / playing / paused). The old "download the
+  Modplug and Flash plugins" sentence and its (dead) FTP link are kept as nostalgic history.
 
 ## Regenerating `site/`
 
@@ -112,7 +121,7 @@ sources live in `private/` (git-ignored, keep that folder: it is the only assemb
   `private/wayback/cdx-*.txt` (queries over 1999-2001 with `collapse=digest`);
 - `private/nas/`: files copied from the local archive (`Sites web/ltp/http/`);
 - `private/music/disissid-2-theme.mod` (Modland);
-- `private/gen/hgo.gif`; `private/vendor/ruffle-0.7.1/`, `private/vendor/chiptune3-0.8.11-r25871/`
+- `private/gen/hgo.gif`, `private/gen/flags/*.gif` (9 flags from Orange Juice v3); `private/vendor/ruffle-0.7.1/`, `private/vendor/chiptune3-0.8.11-r25871/`
   (npm tarballs, unpacked).
 
 ```bash
@@ -146,7 +155,7 @@ python3 scripts/preview.py 3227
 
 ## Removal requests
 
-Pages that list or describe people end with a small footer, "To be removed from this page, contact me." (a `mailto:` link). `scripts/statify.py` adds it (`is_people_page`), so it survives rebuilds; `scripts/verify_build.py` leaves it out of its `mailto:` and e-mail checks.
+Every page with the left menu (it names the sponsoring contact, a family name) and the people lists end with a small footer, "To be removed from this page, contact me." (a `mailto:` link). `scripts/statify.py` adds it (`is_people_page`), so it survives rebuilds; `scripts/verify_build.py` leaves it out of its `mailto:` and e-mail checks.
 
 ## Deploying
 
@@ -203,9 +212,3 @@ If the apply rejects an edge rule or the 404 path, set it by hand (CDN > pull zo
 3. *Edge rules*: condition *URL Extension* `htm`, `html`, `shtml` -> *Set Response Header*
    `Content-Type: text/html; charset=iso-8859-1`.
 4. Storage > storage zone `ltp4` > *Error pages*: set the 404 file to `/404.html`.
-
-## To Do
-
-Cross-links to fix in a batch pass (the targets are archived on `sauthier.family`; rewrite the `href`s):
-
-- `www.ojuice.net` (62 links in 15 files) and `ojuice.net` (23 links in 1 file): Orange Juice v3 (https://orangejuicev3.sauthier.family).
