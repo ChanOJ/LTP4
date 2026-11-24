@@ -203,3 +203,9 @@ If the apply rejects an edge rule or the 404 path, set it by hand (CDN > pull zo
 3. *Edge rules*: condition *URL Extension* `htm`, `html`, `shtml` -> *Set Response Header*
    `Content-Type: text/html; charset=iso-8859-1`.
 4. Storage > storage zone `ltp4` > *Error pages*: set the 404 file to `/404.html`.
+
+## To Do
+
+Cross-links to fix in a batch pass (the targets are archived on `sauthier.family`; rewrite the `href`s):
+
+- `www.ojuice.net` (62 links in 15 files) and `ojuice.net` (23 links in 1 file): Orange Juice v3 (https://orangejuicev3.sauthier.family).
