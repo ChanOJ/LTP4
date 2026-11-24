@@ -60,8 +60,9 @@ Pages are renamed to `.html` (`index.asp` -> `news.html`, `forum.asp` -> `forum.
   are replaced by a short "archived, read-only" notice; the forum posts and car-trip offers
   stay. The mailing-list form of every page (hidden fields only, no visible input) is removed.
 - **Counters**: the cnxweb.com counter of every page is removed.
-- **Personal data redacted**, layout kept: e-mail addresses (`mailto:` links become plain
-  text, addresses become `name@????`), the ICQ badge (with its number) of a car-trip offer,
+- **Personal data redacted**, layout kept: e-mail addresses are shown in full
+  (nick, first name or role as local part) except the two whose local part is a family name
+  (`FAMILY_LOCALS` in `statify.py`: link dropped, address becomes `name@????`), the ICQ badge (with its number) of a car-trip offer,
   the street of the association's postal address (`????`, town kept) and the organisers' mobile
   numbers in the news (`+336????`). Handles and the names in the "entrance fee received" list are
   kept, as published at the time.
@@ -155,7 +156,7 @@ python3 scripts/preview.py 3227
 
 ## Removal requests
 
-Every page with the left menu (it names the sponsoring contact, a family name) and the people lists end with a small footer, "To be removed from this page, contact me." (a `mailto:` link). `scripts/statify.py` adds it (`is_people_page`), so it survives rebuilds; `scripts/verify_build.py` leaves it out of its `mailto:` and e-mail checks.
+Every page with the left menu (it names the sponsoring contact, a family name) and the people lists end with a small footer, "To be removed from this page, contact me." (a `mailto:` link). `scripts/statify.py` adds it (`is_people_page`), so it survives rebuilds; `scripts/verify_build.py` leaves it out of its `mailto:` and e-mail checks, which only flag family-name local parts.
 
 ## Deploying
 

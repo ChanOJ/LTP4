@@ -52,8 +52,15 @@ IPV4 = re.compile(r"(?<![\d.])(?:(?:25[0-5]|2[0-4]\d|1?\d?\d)\.){3}(?:25[0-5]|2[
 REMOVAL_NOTE_RE = re.compile(r'(?s)<div id="removal-note".*?</div>')
 
 
+# E-mail addresses are shown in full (nick, first name or role local part); only family-name
+# local parts must stay masked (same list as FAMILY_LOCALS in statify.py).
+FAMILY_LOCALS = {"nstefani", "etienne.jacques"}
+OK_MAIL = re.compile(r"(?i)(?:mailto:)?([A-Za-z0-9._+-]+)@([A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+)")
+
+
 def rd(p):
-    return REMOVAL_NOTE_RE.sub("", Path(p).read_bytes().decode(ENC))
+    t = REMOVAL_NOTE_RE.sub("", Path(p).read_bytes().decode(ENC))
+    return OK_MAIL.sub(lambda m: m.group(0) if m.group(1).lower() in FAMILY_LOCALS else "", t)
 
 
 def all_files(root):
