@@ -84,13 +84,12 @@ locals {
   # .swf (connect-src 'self') and starts a blob: worker; the mod player of the
   # intro (chiptune3) fetches the .mod and runs an AudioWorklet from the site. form-action 'none': the old forms (forum, car
   # trips, mailing list) are gone and must never submit anywhere.
-  # img-src keeps http:/https: only while legacy remote images remain in the
-  # pages (most hosts are dead; drop it if the build strips them).
+  # img-src: no remote images are used, only https: ones are allowed.
   csp = join("; ", [
     "default-src 'self'",
     "script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'",
     "style-src 'self' 'unsafe-inline'",
-    "img-src 'self' data: http: https:",
+    "img-src 'self' data: https:",
     "media-src 'self'",
     "font-src 'self'",
     "object-src 'none'",
